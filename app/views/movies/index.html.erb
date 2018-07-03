@@ -1,0 +1,68 @@
+
+<h1 id="title">Movies</h1>
+<hr>
+<div id="title" class="row">
+  <% @movies.each do |movie| %>
+  <div class="card col-md-3">
+    <img class="card-img-top" src="<%= movie.image_path.thumb.url %>" alt="<%= movie.title %>">
+    <div class="card-body">
+      <h5 class="card-title" data-id="3",class="aabbcc" ><span><strong><%= movie.title %></strong></span></h5>
+      <p class="card-text">장르 : <%= movie.genre %></p>
+      <p class="card-text">주연배우 : <%= movie.actor%></p>
+      <p class="card-text">감독 : <%= movie.director%></p>
+      <%= link_to '영화 정보보기',movie_path(movie.id), class:'btn btn-primary' %>
+    </div>
+  </div>
+  <br>
+  <% end %>
+</div>
+  <br>
+  
+  <%= link_to 'New Movie', new_movie_path %>
+  
+  <hr>
+  <% if user_signed_in? %>
+  <!-- 로그인 된 상태 -->
+  <%= current_user.email %>
+  <%= link_to "로그아웃", destroy_user_session_path, method: "delete" %>
+  <%else%>
+  <%= link_to "로그인", new_user_session_path %>
+  <%end%>
+  
+  <script>
+/*    func2();
+    var func1 = function(){
+      alert("하위~");
+    }
+     func1();
+    function func2(){
+      alert("하위~2");
+    }
+    
+    var btn = document.getElementsByClassName("btn")[0];
+    btn.addEventListener("mouseover", func2);
+    var btn2 = document.getElementsByClassName("btn")[1];
+    btn2.onmouseover = func1; */
+    
+/*    var btn =  document.getElementsByClassName("btn")[0];
+    btn.addEventListener("mouseover", function(){
+      var title = document.getElementsByClassName("card-title")[0];
+      console.dir(title);
+      title.innerText = "아기상어뚜루뚜뚜뚜"
+    });
+    btn.addEventListener("mouseout", function(){
+      var title = document.getElementsByClassName("card-title")[0];
+      title.innerHTML = "<strong>어바웃 타임<strong>"
+    });
+    
+    */
+    
+    var btn =  document.getElementsByClassName("btn")[0];
+    btn.addEventListener("mouseover", function(){
+      btn.setAttribute("class", "btn btn-danger");
+    });
+    btn.addEventListener("mouseout", function(){
+      btn.setAttribute("class", "btn btn-primary");
+    })
+    
+  </script>
