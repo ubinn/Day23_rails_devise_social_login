@@ -16,8 +16,6 @@ binn02:~/workspace $ cd
 binn02:~ $ rails _5.0.7_ new watcha_app
 ```
 
-
-
 #### Watcha (영화 정보 저장)
 
 - scaffold 완성
@@ -72,13 +70,13 @@ gem 'turbolinks', '~> 5' # 무거운 레일즈 앱을 경량화 시킴.
 
 ```
 
-**turbolink 삭제 **
+**turbolink 삭제**
 
 1. gem
 2. application.js
 3. application.html.erb
 
-**devise 설치 **
+**devise 설치**
 
 https://github.com/plataformatec/devise
 
@@ -186,7 +184,7 @@ JS : getElementsByClassName / getElementByID / getElementsByTagName
 
 > document.getElementById("title");
 >
-> <h1 id="title">Movies</h1>
+> `<h1 id="title">Movies</h1>`
 >
 > > 먼저 발견된 한개의 친구만 나온다. <- element 이기 때문에!
 

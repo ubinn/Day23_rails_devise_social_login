@@ -7,6 +7,7 @@ class CreateMovies < ActiveRecord::Migration[5.0]
       t.string :actor
       t.string :image_path
       
+      
       t.references :user # t.integer :user_id 랑 같은형태
       
       t.text :description

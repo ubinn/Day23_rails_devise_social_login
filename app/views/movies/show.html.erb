@@ -1,5 +1,17 @@
 <h1><%= @movie.title %></h1>
 <hr>
 <p> <%=@movie.description %></p>
+<hr>
 <%= link_to 'Edit', edit_movie_path(@movie) %> |
-<%= link_to 'Back', movies_path %>
+<%= link_to 'Back', movies_path %>  | 
+<button class="btn btn-info like">좋아요</button>
+<script>
+    $(document).on('ready',function(){
+        $('.like').on('click', function(){
+            console.log("like~!") // 확인용
+            $.ajax({
+               url: '/likes/<%= @movie.id %>' 
+            });
+        })
+    });
+</script>

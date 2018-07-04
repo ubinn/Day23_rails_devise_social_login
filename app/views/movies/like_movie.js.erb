@@ -1,0 +1,14 @@
+alert("좋아요 설정되쩡!");
+
+
+//좋아요가 취소된 경우
+// 좋아요 취소버튼 -> 좋아요 버튼으로 바꿔준다.
+if (<%= @like.frozen? %>) {
+$('.btn').text("좋아요").removeClass.addClass("btn-info");
+
+}else{
+//좋아요가 새로눌린 경우
+// 좋아요 버튼 -> 좋아요 취소버튼으루~!~!
+$('.btn').text("좋아요 취소").toggleClass("btn-warning text-white");
+
+}
