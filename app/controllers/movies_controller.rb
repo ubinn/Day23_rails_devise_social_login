@@ -71,6 +71,7 @@ class MoviesController < ApplicationController
       p params
             # 만약에 현재 로그인한 유저가 이미 좋아요를 눌렀을 경우 해당 Like 인스턴스 삭제
       @like = Like.where(user_id: current_user.id, movie_id: params[:movie_id]).first
+      
       if @like.nil?
         @like = Like.create(user_id: current_user.id, movie_id: params[:movie_id])
       else
