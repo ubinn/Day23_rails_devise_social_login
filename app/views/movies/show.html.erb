@@ -2,9 +2,36 @@
 <hr>
 <p> <%=@movie.description %></p>
 <hr>
+
 <%= link_to 'Edit', edit_movie_path(@movie) %> |
 <%= link_to 'Back', movies_path %>  | 
-<button class="btn btn-info like">좋아요</button>
+<% if @user_likes_movie.nil? %>
+<button class="btn btn-info like">좋아요 (<span class="like-count"><%= @movie.likes.count %></span>)</button>
+<% else %>
+<button class="btn btn-warning like">좋아요 취소 (<span class="like-count"><%= @movie.likes.count %></span>)</button>
+<% end %>
+<hr>
+
+<form class="text-right comment">
+    <input class="form-control comment-contents"><br/>
+    <input type="submit" value="댓글쓰기" class="btn btn-success">
+</form>
+<hr>
+<h3>댓글</h3><br>
+<ul class="list-group comment-list">
+    <!--<li class="list-group-item">Cras justo odio</li>-->
+    <!--기존에 등록되어있는 댓글 출력-->
+    <% @movie.comments.reverse.each do |comment| %>
+        <li class="comment-<%= comment.id %> list-group-item d-flex justify-content-between">
+           <span class="comment-detail-<%= comment.id%>"><%= comment.contents %></span>
+            <div>
+                <button data-id="<%= comment.id %>" class="btn btn-warning text-white edit-comment">수정</button>
+                <button data-id="<%= comment.id %>" class="btn btn-danger destroy-comment">삭제</button>
+            </div>
+        </li>    
+    <% end %>
+</ul>
+<hr>
 <script>
     $(document).on('ready',function(){
         $('.like').on('click', function(){
@@ -13,5 +40,61 @@
                url: '/likes/<%= @movie.id %>' 
             });
         })
+        $('.comment').on('submit', function(e){
+            e.preventDefault();
+            var comm = $('.comment-contents').val();
+            console.log(comm);
+            $.ajax({
+                url: '/movies/<%= @movie.id %>/comments',
+                data: {contents: comm},
+                method: "post"
+            });
+
+        });
+        $(document).on('click','.destroy-comment', function(){
+            console.log("destroyed!!!!");   
+            var comment_id = $(this).attr('data-id');
+          //  $(this).data('id'); //이렇게도 뽑아낼수있으data-id로 썼던 이유.
+          console.log(comment_id);
+            $.ajax({
+                url: "/movies/comments/" + comment_id, //resouceful routing
+                method: "delete"
+            })
+        });
+        $(document).on('click','.edit-comment', function() {
+       
+        var comment_id = $(this).data('id');
+        var edit_comment = $(`.comment-detail-${comment_id}`);
+        var contents = edit_comment.text().trim();
+        var confirm_button = $('.update-comment').length;
+        console.log(confirm_button);
+        if(confirm_button > 0){
+            alert("수정 버튼은 한개만 눌러주세요.");
+            return false;
+        }else{
+        edit_comment.html(`
+        <input type="text" value="${contents}" class="form-control edit-comment-${comment_id}">`);
+        $(this).text("확인").removeClass("edit-comment btn-warning").addClass("update-comment btn-dark");
+        
+        }
+            
+        });
+        
+        $(document).on('click','.update-comment' ,function(){
+        //   console.log("update"); 
+           var comment_id = $(this).data('id');
+           var comment_form = $(`.edit-comment-${comment_id}`)
+        //   console.log(comment_form.val());
+           
+            $.ajax({
+                url: "/movies/comments/" + comment_id,
+                data:{contents: comment_form.val()},
+                method: "PATCH"
+            })
+            
+            
+            
+        });
     });
 </script>
+
