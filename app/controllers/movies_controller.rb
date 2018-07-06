@@ -1,6 +1,6 @@
 class MoviesController < ApplicationController
-  before_action :js_authenticate_user!, only: [:like_movie]
-  before_action :authenticate_user!, except: [:index, :show]
+  before_action :js_authenticate_user!, only: [:like_movie, :create_comment, :destroy_comment, :update_comment]
+  before_action :authenticate_user!, except: [:index, :show, :search_movie]
   before_action :set_movie, only: [:show, :edit, :update, :destroy, :create_comment]
   
 
@@ -8,7 +8,11 @@ class MoviesController < ApplicationController
   # GET /movies
   # GET /movies.json
   def index
-    @movies = Movie.all
+    @movies = Movie.page(params[:page])
+    # respond_to do |format|
+    #   format.html
+    #   format.js
+    # end
   end
 
   # GET /movies/1
@@ -109,7 +113,19 @@ class MoviesController < ApplicationController
     @comment = Comment.find(params[:comment_id])
     @comment.update(contents: params[:contents]) 
   end
-
+  
+  def search_movie
+    respond_to do |format|  # 분기 : 서로 다른 자바스크립트 파일을 보내줄경우
+      if params[:q].strip.empty?
+      format.js {render 'no_content'}
+      # 아무응답도 해주지 말라 라는 뜻.
+     else
+       @movies = Movie.where("title LIKE ?", "#{params[:q]}%")
+        format.js {render 'search_movie'}
+      end
+    end
+  end
+  
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_movie

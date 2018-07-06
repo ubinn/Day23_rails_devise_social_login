@@ -60,3 +60,10 @@ gem 'devise'
 # file upload
 gem 'carrierwave'
 gem 'mini_magick'
+
+# pagination
+gem 'kaminari'
+gem 'bootstrap4-kaminari-views'
+
+#fake data
+gem 'faker'
