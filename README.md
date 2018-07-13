@@ -1,390 +1,282 @@
-## Day17_180704
+## Day23_180713
 
+### devise gem을 이용한 소셜로그인
 
+- 구글로그인
 
-- jQuery (요소 선택자, 이벤트 리스너)
-  - jQuery는 jQuery CDN으로 가져와야하는거지만, rails에서는 jQuery가 내장되어 있다.
-  - 하지만, rails 5.1버전 이상으로 사용하게 되면 어중간하게 설치가 되어있기때문에 다시 확인해야한다.
-  - `<%= link_to '로그아웃', user_session_destroy_path ,method: 'destroy', data: {confirm: "삭제하시겠습니까?"} %>` 여기에서 `data: {confirm: "삭제하시겠습니까?"} ` 이 부분.
-  - 
+		https://github.com/zquestz/omniauth-google-oauth2
 
-```javascript
-> $
-ƒ ( selector, context ) {
-		// The jQuery object is actually just the init constructor 'enhanced'
-		// Need init if jQuery is called (just allow error to be thrown if not included)
-		return new jQuery…
+ 1. gem 설치 `gem 'omniauth-google-oauth2'`
+
+	2. '[https://console.developers.google.com](https://console.developers.google.com/)'  가서 API 생성
+
+	3.  OAuth 2.0 클라이언트 ID 다운받기
+
+	4. *devise.rb* 에OmniAuth 부분에 `   config.omniauth :google_oauth2, ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET'], {}` 추가 
+
+	5. *application.yml* 에다가 피가로로 구글클라이언트아이디랑 시크릿키 입력
+
+	6. *devise.rb* 에 
+
+    ```ruby
+      config.omniauth :google_oauth2, ENV['GOOGLE_CLIENT_ID'], ENV['GOOGLE_CLIENT_SECRET'], 
+      {
+        scope: 'email',
+        prompt: 'select_account'
+      }
+    ```
+
+	7. devise model에 custom_column 추가하기 : `rails g migration add_columns_to_users`
+
+	8. *~/watcha_app/db/migrate/20180713013101_add_columns_to_users.rb*
+
+    ```ruby
+    class AddColumnsToUsers < ActiveRecord::Migration[5.0]
+      def change
+        #  add_column :DB명(복수), :컬럼명, :타입
+        add_column :users, :provider,   :string # 이 정보를 어디서 받아왔냐를 담고있는 애
+        add_column :users, :name,       :string
+        add_column :users, :uid,        :string # 토큰! 얘는 인증받은 유저임을 알려주는 토큰
     
->$("css 선택자")
-jQuery.fn.init [prevObject: jQuery.fn.init(1), context: document, selector: "css 선택자"]		
-
->$(".btn") <= elementsByClassName
-jQuery.fn.init(3) [a.btn.btn-primary, a.btn.btn-primary, a.btn.btn-primary, prevObject: jQuery.fn.init(1), context: document, selector: ".btn"]
-
->$('button') <- HTML tag를 가져온다.
-
-> $('#title') <- 아이디는 유일하게 있어야하기때문에 아이디가 중복이라도 결과값은 한개만 나온다.
-jQuery.fn.init [h1#title, context: document, selector: "#title"]
-
-
-```
-
-jQuery를 사용한 이벤트 적용 방식
-
-
-```javascript
-$('.btn').mouseover(function() {
-    console.log("건들이지마이야이야~");
-});
-
-$('.btn').on('mouseover', function() {
-    console.log("건들이지 말랬지 ㅡㅡ");
-});
-```
-
-> 두번째 방식을 가장 많이 쓰는데 이벤트를 늘려갈수있기 때문에! 많이 사용한다.
-
-
-
-- 마우스가 버튼위에 올라갔을때, 버튼에 있는 btn-primary클래스를 삭제하고, btn-danger 클래스를 준다. 버튼에서 마우스가 내려왔을 때, 다시 btn-danger 클래스를 삭제하고 btn-primary 클래스를 추가한다.
-  - 여러개의 이벤트 등록하기
-  - 요소에 class를 넣고 빼는 jQuery Function을 찾기. => .addClass / .removeClass || 이둘을 합쳐져 있는게 .toogleClass
-
-```javascript
-btn.on('mouseenter mouseout', function() {
-    //두개의 이벤트 리스너, 한개의 이벤트 핸들러
+      end
+    end
     
+    ```
+
+	9. `rake db:migrate`
+
+	10. *user.rb* 에 
+
+     ```ruby
+       devise :database_authenticatable, :registerable,
+              :recoverable, :rememberable, :trackable, :validatable, :omniauthable, omniauth_providers: [:google_oauth2]
+     ```
+
+     > `:omniauthable, omniauth_providers: [:google_oauth2]` 을 추가.
+     >
+     >
+
+	11. routes.rb 설정
+
+     ```ruby
+     Rails.application.routes.draw do
+       mount RailsAdmin::Engine => '/ahctaw', as: 'rails_admin'
+       devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
+       root 'movies#index'
+       
+     ```
+
+     >  `devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }` 붙여넣기
+
+	12. 여기까지 했으면 로그인창에서 버튼하나생기고, 구글창으로는 넘어가는게 보입니다. (로그인을 실제로는 할수는없지만)
+
+     > **Error: redirect_uri_mismatch**  페이지로 넘어가욤.
+
+     - call back uri 설정이랑
+     - callbacks controller  셋업
+
+	13. **Error: redirect_uri_mismatch** 에 있는callback uri를  구글 APIs 의 서비스에 callback uri를 넣어준다.
+
+     > https://my-second-rails-app-binn02.c9users.io/users/auth/google_oauth2/callback 
+
+	14. 그러고 나서 다시 나의 페이지의 구글로그인으로 들어가보면 계정선택하는 페이지로 잘 연결되는것을볼수있다.
+
+     하지만 클릭하면 라우팅에러
+
+     > Started GET "/users/auth/google_oauth2" 이 패스를 지정해준 라우팅이 없어서 에러뿜뿜
+
+	15.  https://github.com/plataformatec/devise 에서 보고, `rails g devise:controllers users` 해주면 다음과 같은 controller들이 생성
+
+     >       create  app/controllers/users/confirmations_controller.rb
+     >       create  app/controllers/users/passwords_controller.rb
+     >       create  app/controllers/users/registrations_controller.rb
+     >       create  app/controllers/users/sessions_controller.rb
+     >       create  app/controllers/users/unlocks_controller.rb
+     >       create  app/controllers/users/omniauth_callbacks_controller.rb
+
+> ~/watcha_app/app/controllers/users 밑에 controller가 생성된것을 볼수있죠
+
+16. *~/watcha_app/app/controllers/users/omniauth_callbacks_controller.rb*에 
+
+    ```ruby
     
-btn.on('mouseenter mouseout', function() {
-    btn.removeClass("btn-primary").addClass("btn-danger");
-})
-    // 이렇게 하면 btn-danger 로 변하고 끝. 근데 계속 변화시키고싶으니까 danger이 있을때 다시 primary로 바꿔주면 되겠지
-    // .hasClass()로 해당 클래스를 찾아주자
-
-    
-    
-btn.on('mouseenter mouseout', function(){
-    if (btn.hasClass('btn-danger')) {btn.removeClass('btn-danger').addClass('btn-primary');} else { btn.removeClass('btn-primary').addClass('btn-danger'); }});
-    
-    
-    btn.on('mouseenter mouseout', function(){
-    $(this).toggleClass('btn-danger').toggleClass('btn-primary');
-});
-```
-
-> $(this) : 이벤트가 발생한 바로 그 대상을 지칭.
->
-> console.dir(this); -> 바로 html요소가 뜬다.
-> console.dir($(this)); -> jQuery 요소! jQuery메소드를 사용할땐 이렇게 jQuery로 감싸주어야 한다.
-
-> toggle : 있으면 빠지고, 없으면 넣어주니까
-
-
-
-- 버튼에 마우스가 오버되었을때, 상단에 있는 이미지의 속성에 style 속성과 `width: 100px;`의 속성값을 부여한다.
-
-```javascript
-btn.on('mouseover',function() {
-    $('img').attr('style', 'width: 100px;'); }); 
-// 속성값 부여
-
-$('img').attr('style');
- "width: 100px;"
-// 속성값 가져오기 (1개만.)
-```
-
-
-
-- 텍스트 바꾸기 .text()
-
-  - return <- 인자가 있는경우
-  - set <- 인자가 없는경우에는 들어있는 innertext속성을 꺼내온다.
-
-  > $(this).siblings().find("card-title").text("...")
-
-
-
-- 버튼(요소)에 마우스가 오버(이벤트)됬을 때(이벤트 리스너), 이벤트가 발생한 버튼($(this))과 같은 수준(같은 부모를 갖는: siblings())이 아닌 상위 수준(parent()) 에 있는  요소 중에서 `.card-title`의 속성을 가진 친구를 찾아(find()) 텍스트를 변경(text())시킨다.
-
-```javascript
-btn.on('mouseover', function() {
-   $(this).parent().find('.card-title').text("건들이는거 노노");
-});
-
-// find()는 하위수준에서 찾기 때문에 siblings가 아닌 parent()를 사용하여 상위수준으로 올려서 찾아야한다.
-```
-
-
-
-### 놀리기 텍스트 변환기(얼레리 꼴레리)
-
-*index.html*
-
-```html
-<textarea id="input" placeholder="변환텍스트를 입력해주세요"></textarea>
-<button class="translate">바꿔줘</button>
-<h3></h3>
-```
-
-- input에 들어있는 text중에서 '관리' -> '고나리' 로, '확인' -> '호가인' 로 '훤하다' -> '허누하다' 의 방식으로 텍스를 오타로 바꾸는 이벤트핸들러 작성하기
-  - ㅎ ㅜ ㅓ ㄴ 에서 두번째꺼랑 세번째꺼 바꿔주면 된다.
-  - 1. 분해한 글자의 4번째요소가 있는지
-    2.  2번째 3번째 요소가 모음인지
-  - 분리 -> 순서바꾸기 -> 합치기
-
-- https://github.com/e-/Hangul.js 에서 라이브러리를 받아서 자음과 모음을 분리하고 다시 단어로 합치는 기능을 살펴보기.
-- `String.split('')`: `''`안에 있는것을 기준으로 문자열을 잘라준다. (return type: 배열)
-- `.map(function(el){ })` : 배열을 순회하면서 하나의 요소마다 function을 실행시킴 (el : 순회하는 각 요소 ( 가변수 ), return type : 새로운 배열)
-- `Array.join('')` : 배열에 들어있는 내용들을 `''`안에 있는 내용을 기준으로 합쳐준다.
-
-
-
-#### 진행
-
-1. 아톰을 킨다.
-2. html양식을 완료한다 
-3. Hangual.js을 그 폴더에 넣는다.
-4. jQuery CDN을 설치한다
-
-```html
-
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title>얼레리 꼴레리</title>
-    <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60=" crossorigin="anonymous"></script>
-  </head>
-  <body>
-    <h1> 놀리기 변환 </h1>
-    <textarea id="input" placeholder="변환텍스트를 입력해주세요"></textarea><br/>
-    <button class="translate">바꿔줘</button>
-    <h3></h3>
-    <script src="./hangul.js" type="text/javascript"></script>
-    <script type="text/javascript">
-      
-    </script>
-  </body>
-</html>
-```
-
-> ​    <script scr="./translate.js" type="text/javascript"></script> 하면 스크립트 내용을 따로 뺄수있다.
-
-
-
-5. textarea에 있는 내용물을 가지고 오는 코드
-
-`    $('#input').val();` : 인자가 없을때는 내용물을 꺼내고, 인자가 있을때는 내용물을 인자값으로 집어넣고.
-
-6. 버튼에 이벤트리스너(click)를 달아주고, 핸들러에는 1번에서 작성한 코드를 넣는다.
-
-```html
-    <script type="text/javascript">
-      $('.translate').on('click', function() {
-        var input = $('#input').val();
-        console.log(input); 
-      })
-    </script>
-```
-
-7. 6번 코드의 결과물을 한글자씩 분해해서 배열로 만들어준다.
-
-`console.log(Hangul.disassemble(input));`
-
-8. 분해한 글자의 4번째요소가 있는지 && 2번째 3번째 요소가 모음인지
-9. 2번째 3번재 모음의위치를 바꾸어준다.
-10. 결과물로 나온 배열을 문자열로 이어준다(join 사용)
-
-*translate.js*
-
-```javascript
-function translate(str){
-  return str.split('').map(function(el){ //map : 하나씩 돌아가면서 조작
-    // el. 을 가지고 조작합니다
-    var d = Hangul.disassemble(el);
-    console.log(d)
-    if(d[3] && Hangul.isVowel(d[1]) && Hangul.isVowel(d[2])){
-    var temp = d[2];
-    d[2] = d[3];
-    d[3] = temp;
-
-    }
-      return Hangul.assemble(d);
-    }).join('');
-}
-
-```
-
-11. 결과물을 출력해줄 요소를 찾는다. 
-12. 요소에 결과물을 출력한다. -> 다음 결과물을 h2태그에 배치한다.
-
-```html
-<script src="./translate.js"></script>
-<script type="text/javascript">
-      $('.translate').on('click', function() {
-        var input = $('#input').val();
-	    var result = translate(input);
-        $('h3').text(result);
-        console.log(result);
-      })
-</script>
-```
-
-
-
-### Ajax
-
-translate.js 에 있는 Function을 사용해보았다. 그렇다면 서버에 있는 액션은 어떻게 사용해야할까?
-
-client < - > server (-> res 즉, 응답방식이 HTML이였을땐 화면전환이 있었다.) rails는 임의로 정해주지 않는한 req 와 res 의 파일은 같은 형식을 띈다. 즉, javascript로 응답을 보내면 페이지 전환이 있는것이 아니라, 어떠한 액션! 을 넣어주는것. 화면전환없이 서버에 요청을 보내고, 응답을 받을수있기 때문에 많이 사용한다.
-
-즉, 서버에 요청을 javascript 타입으로 보내는것이 AJAX라고 할수있다.
-
->  rails 에서는 어느 메소드(액션)으로 보낼지 (=> routes )
->
-> Ajax 에서 어디로 어떻게 보낼지 (=> url , Http method)
-
-```javascript
-$.ajax({
-    url: 어느주소로 요청을 보낼지,
-    method: 어떠한 HTTP method로 요청을 보낼지,
-    data: {
-    k: v 어떤 값을 함께 보낼지 (k,v로 구성),
-   	// 서버에서는 params[k] => v
-    
-	}
-}
-```
-
-
-
-
-
-- 좋아요 옵션 만들기
-- 유저와 영화의 좋아요관계는 다대다 이므로 => 
-  1. 모델생성
-
-`binn02:~/watcha_app (master) $ rails g model like`
-
-*~/watcha_app/db/migrate/20180704061215_create_likes.rb.rb*
-
-```ruby
-      t.integer :user_id
-      t.integer :movie_id
-```
-
-2. 관계설정
-
-*like.rb*
-
-```ruby
-    belongs_to :user
-    belongs_to :movie
-```
-
-`movie.rb` 와` user.rb` 에서는 `has_many :likes` 랑     `has_many :users, through: :likes`해야하는데 이미 유저랑 무비가 다대다니까 중복이되쟈나
-
-<< 해결방법 >>
-
-1. 작성자이름만 movie가 갖게하여 다대다를 끊어주는거
-2. 다대다 관계를 느슨하게 > movie.likes.count 로 세어주기만 하는 방법이 있어
-
-
-
-1번 방법을 사용하였다.
-
-*user.rb*
-
-```ruby
-  has_many :likes
-  has_many :movies, through: :likes
-```
-
-*movie.rb*
-
-```ruby
-    has_many :likes
-    has_many :users, through: :likes
-```
-
-
-
-script는 동적으로 불러와진다. 특정 버튼에 이벤트를 넣을때,  페이지가 완전히 다 로딩되었는지 알려주는 코드가 필요하다.
-
-*show.html.erb*
-
-```ruby
-...
-    
-<script>
-    $(document).on('ready',function(){
+        def google_oauth2
+          # You need to implement the method below in your model (e.g. app/models/user.rb)
+          p request.env['omniauth_auth']
+          @user = User.from_omniauth(request.env['omniauth.auth'])
+          if @user.persisted?
+            flash[:notice] = I18n.t 'devise.omniauth_callbacks.success', kind: 'Google'
+            sign_in_and_redirect @user, event: :authentication
+          else
+            session['devise.google_data'] = request.env['omniauth.auth'].except(:extra) # Removing extra as it can overflow some session stores
+            redirect_to new_user_registration_url, alert: @user.errors.full_messages.join("\n")
+          end
+        end
         
-    });
-</script>
+    ```
 
-```
+    > 선언
 
-> 문서가 다 로드됬을때 이벤트를 사용하겠다.	
-
-1. 좋아요 버튼을 눌렀을때
+17. user.rb 에 다음과 같이 클래스메소드 선언.
 
 ```ruby
-<script>
-    $(document).on('ready',function(){
-        $('.like').on('click', function(){
-            
-        })
-    });
-</script>
+def self.from_omniauth(access_token)
+    data = access_token.info
+    user = User.where(email: data['email']).first
+        # Uncomment the section below if you want users to be created if they don't exist
+     unless user
+    #     user = User.create(name: data['name'],
+    #        email: data['email'],
+    #        password: Devise.friendly_token[0,20]
+    #     )
+    # end
+    user
+  end
 ```
 
-
-
-2. 서버에 요청을 보낸다. (현재 유저와 현재 보고있는 이 영화가 좋다고 하는 요청)
+> 우리는 구글이메일로 로그인한 유저의 아이디를 만들어주지않았으므로, 저 주석은 해제하고, 우리의 양식에 맞게 몇개를 더 추가해주자
 
 ```ruby
-<script>
-    $(document).on('ready',function(){
-        $('.like').on('click', function(){
-            console.log("like~!") // 확인용
-            $.ajax({
-               url: '/likes' 
-            });
-        })
-    });
-</script>
-
+ def self.from_omniauth(access_token)
+    data = access_token.info
+    user = User.where(email: data['email']).first
+        # Uncomment the section below if you want users to be created if they don't exist
+    unless user
+        user = User.create(name: data['name'],
+            email: data['email'],
+            password: Devise.friendly_token[0,20],
+            provider: access_token.provider,
+            uid: access_token.uid
+        )
+    end
+    user
+  end
 ```
 
-*routes.rb* 에  ` get '/likes' => 'movies#like_movie'` 해주면 이런 에러가 뜬다
+> 토큰의 provider와 uid까지 저장을 시키쟈
 
-AbstractController::ActionNotFound (The action 'like_movie' could not be found for MoviesController): 
-
-*movie_controller* 에 `   def like_movie end` 써준다. 이거와 같은이름의 `like_movie.js` 에서 alert하면 저 def가 실행될때 자동으로 같은이름의 자바스크립트도 읽을수있다.
-
-하지만, 로그인하지않고 좋아요버튼을 누르면 401에러가 뜬다. -> 해결하기 위해서 filter를 설정
-
-*movie_controller* 에서 `  before_action :js_authenticate_user!, only: [:like_movie]` 쓰기위해서!! *application_controller* 에서 `s_authenticate_user!` 를 설정했다.
-
-1. 서버가 할 일
-2. 응답이 오면 좋아요 버튼의 텍스트를 좋아요 취소로 바꾸고 `btn-info` -> `btn-warning text-whitle`로 바꿔준다.
-
-```javascript
-alert("좋아요 설정되쩡!");
-
-
-//좋아요가 취소된 경우
-// 좋아요 취소버튼 -> 좋아요 버튼으로 바꿔준다.
-if (<%= @like.frozen? %>) {
-$('.like').text("좋아요").toggleClass("btn-info btn-warning text-white");
-
-
-}else{
-//좋아요가 새로눌린 경우
-// 좋아요 버튼 -> 좋아요 취소버튼으루~!~!
-
-$('.like').text("좋아요 취소").toggleClass("btn-info btn-warning text-white");
-}
+```ruby
+SQL (0.4ms)  INSERT INTO "users" ("email", "encrypted_password", "created_at", "updated_at", "provider", "uid") VALUES (?, ?, ?, ?, ?, ?)  [["email", "rmhg5140@naver.com"], ["encrypted_password", "$2a$11$ussFyqDWkDyAGOYt2MHWAu7xjqwGLbX5lgC/blH2MBSv.TdqY1pHa"], ["created_at", "2018-07-13 02:37:03.837486"], ["updated_at", "2018-07-13 02:37:03.837486"], ["provider", "google_oauth2"], ["uid", "110443456264759351970"]]
+   (7.5ms)  commit transaction
+   (0.1ms)  begin transaction
+  SQL (1.0ms)  UPDATE "users" SET "sign_in_count" = ?, "current_sign_in_at" = ?, "last_sign_in_at" = ?, "current_sign_in_ip" = ?, "last_sign_in_ip" = ?, "updated_at" = ? WHERE "users"."id" = ?  [["sign_in_count", 1], ["current_sign_in_at", "2018-07-13 02:37:03.848877"], ["last_sign_in_at", "2018-07-13 02:37:03.848877"], ["current_sign_in_ip", "222.107.238.15"], ["last_sign_in_ip", "222.107.238.15"], ["updated_at", "2018-07-13 02:37:03.850782"], ["id", 2]]
+   (17.9ms)  commit transaction
 ```
 
+> 다음과 같이 유저가 저장된것을 볼수있다.
 
 
+
+- 카카오톡 로그인
+
+1. https://developers.kakao.com/apps/212041/settings/user 에서 앱 프로젝트 하나 만들고, 개요에서 사용자관리에서 동의로 바꿔준다.
+
+2. 플랫폼 만들고, 사이트 도메인해주고, 리다이렉트 패스에다가 콜팩을 받는 url를 써줘야한다.
+
+3.  devise_scope 사용해서 콜백uri만들기
+
+   *routes.rb*
+
+   ```ruby
+     devise_scope :user do
+       get 'users/auth/kakao', to: 'users/omniauth_callbacks#kakao'
+       get '/users/auth/kakao/callback', to: 'users/omniauth_callbacks#kakao_auth'
+     end
+   ```
+
+4. 카카오톡 홈페이지로 다시 돌아와서 플랫폼의 redirect path 에 `/users/auth/kakao/callback` 을 작성해준다.
+
+5. https://developers.kakao.com/docs/restapi/tool 카카오톡 개발가이드의 REST API도구에서 계정로그인
+
+   > 한번에 인증되는 구글과는 달리, 두번받아야 사용자이메일을받을수있어
+
+6. *application.yml* 에서 `KAKAO_REST_API_KEY` 추가하기
+
+7. `rails g devise:views`
+
+8. *~/watcha_app/app/views/devise/sessions/new.html.erb* 에서 카카오톡 로그인버튼 넣어주자
+
+   ```ruby
+   <%= link_to 'Sign in with kakao','users_auth_kakao_path' -%><br/>
+    <!---%> ㅎㅏ면 줄바꿈이 된다-->
+   ```
+
+9. *~/watcha_app/app/controllers/users/omniauth_callbacks_controller.rb*
+
+   ```ruby
+    def kakao
+         redirect_to "https://kauth.kakao.com/oauth/authorize?client_id=#{ENV['KAKAO_REST_API_KEY']}&redirect_uri=https://my-second-rails-app-binn02.c9users.io/users/auth/kakao/callback&response_type=code"
+       end 
+   ```
+
+10. *~/watcha_app/app/controllers/users/omniauth_callbacks_controller.rb*
+
+    ```ruby
+    def kakao_auth
+          code = params[:code]
+          base_url = "https://kauth.kakao.com/oauth/token"
+          base_response = RestClient.post(base_url, {grant_type: 'authorization_code',
+                                                     client_id: ENV['KAKAO_REST_API_KEY'],
+                                                     redirect_uri: 'https://my-second-rails-app-binn02.c9users.io/users/auth/kakao/callback',
+                                                     code: code})
+          puts base_response
+          res = JSON.parse(base_response)
+          access_token = res["access_token"]
+        end
+    ```
+
+    > base_response에서 받은 access_token을꺼내야해
+
+11. https://developers.kakao.com/docs/restapi/tool 개발가이드의 REST API도구중 사용자정보요청에서
+
+    ```ruby
+        def kakao_auth
+          code = params[:code]
+          base_url = "https://kauth.kakao.com/oauth/token"
+          base_response = RestClient.post(base_url, {grant_type: 'authorization_code',
+                                                     client_id: ENV['KAKAO_REST_API_KEY'],
+                                                     redirect_uri: 'https://my-second-rails-app-binn02.c9users.io/users/auth/kakao/callback',
+                                                     code: code})
+          puts base_response
+          res = JSON.parse(base_response)
+          access_token = res["access_token"]
+          info_url = "https://kapi.kakao.com/v2/user/me"
+          info_response = RestClient.get(info_url, Authorization: "Bearer #{access_token}")
+          @user = User.from_omniauth_kakao(JSON.parse(info_response))
+        end
+    ```
+
+    12. *user.rb*
+
+        ```ruby
+          def self.from_omniauth(access_token)
+            data = access_token.info
+            user = User.where(email: data['email']).first
+                # Uncomment the section below if you want users to be created if they don't exist
+            unless user
+                user = User.create(name: data['name'],
+                    email: data['email'],
+                    password: Devise.friendly_token[0,20],
+                    provider: access_token.provider,
+                    uid: access_token.uid
+                )
+            end
+            user
+          end
+        ```
+
+    13.  *omniauth_callbacks_controller.rb* 에서 def kakao_auth 에 
+
+        ```ruby
+              if @user.persisted?
+                flash[:notice] = "카카오 로그인에 성공했습니다."
+                sign_in_and_redirect @user, event: :authentication
+              else
+                flash[:notice] = "카카오 로그인에 실패했습니다. 다시 시도해주세요."
+                redirect_to new_user_session_path
+              end
+              
+        ```
+
+
+    ​    
