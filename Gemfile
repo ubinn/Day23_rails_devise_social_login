@@ -67,3 +67,15 @@ gem 'bootstrap4-kaminari-views'
 
 #fake data
 gem 'faker'
+
+#wysiwyg editor
+gem 'summernote-rails', '~> 0.8.10.0'
+
+
+#rails admin
+gem 'rails_admin'
+
+gem 'omniauth-google-oauth2'
+gem 'figaro'
+
+gem 'rest-client'

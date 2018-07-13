@@ -1,7 +1,14 @@
 Rails.application.routes.draw do
-  devise_for :users
-  root 'movies#index'
+  mount RailsAdmin::Engine => '/ahctaw', as: 'rails_admin'
+  devise_for :users, controllers: { omniauth_callbacks: 'users/omniauth_callbacks' }
+  devise_scope :user do
+    get 'users/auth/kakao', to: 'users/omniauth_callbacks#kakao'
+    get '/users/auth/kakao/callback', to: 'users/omniauth_callbacks#kakao_auth'
+  end
   
+  
+  root 'movies#index'
+
   resources :movies do
     # member do     #  test_movie GET    /movies/:id/test(.:format)     movies#test
     #   get '/test' => 'movies#test'  
@@ -21,7 +28,7 @@ Rails.application.routes.draw do
     end
 end
   get '/likes/:movie_id' => 'movies#like_movie'
-
+  post '/uploads' => 'movies#upload_image'
   
  # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
 end

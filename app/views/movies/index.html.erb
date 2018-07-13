@@ -40,6 +40,7 @@
   
   <script>
     $(document).on('ready', function(){
+      setInterval(function(){ 
       $('.movie-title').on('keyup',function(){
         $('.recomm-movie').html('');
         var title = $(this).val();
@@ -51,6 +52,7 @@
           }
         })
       })
+      ,3000});
     });
   </script>
   

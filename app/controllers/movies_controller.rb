@@ -125,6 +125,11 @@ class MoviesController < ApplicationController
       end
     end
   end
+  def upload_image
+    @image = Image.create(image_path: params[:upload][:image])
+    # 이미지에 해당하는 url 혹은 주소를 날려줘야해
+    render json: @image
+  end
   
   private
     # Use callbacks to share common setup or constraints between actions.

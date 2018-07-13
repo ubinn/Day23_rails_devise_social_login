@@ -5,6 +5,7 @@ class CreateComments < ActiveRecord::Migration[5.0]
       
       t.integer :user_id
       t.integer :movie_id
+      t.integer :score
 
       t.timestamps
     end

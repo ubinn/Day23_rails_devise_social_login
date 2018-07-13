@@ -1,14 +1,14 @@
 <h1><%= @movie.title %></h1>
 <hr>
-<p> <%=@movie.description %></p>
+<p> <%= simple_format (@movie.description) %></p>
 <hr>
 
 <%= link_to 'Edit', edit_movie_path(@movie) %> |
 <%= link_to 'Back', movies_path %>  | 
 <% if @user_likes_movie.nil? %>
-<button class="btn btn-info like">좋아요 (<span class="like-count"><%= @movie.likes.count %></span>)</button>
+    <button class="btn btn-info like">좋아요 (<span class="like-count"><%= @movie.likes.count %></span>)</button>
 <% else %>
-<button class="btn btn-warning like">좋아요 취소 (<span class="like-count"><%= @movie.likes.count %></span>)</button>
+    <button class="btn btn-warning like">좋아요 취소 (<span class="like-count"><%= @movie.likes.count %></span>)</button>
 <% end %>
 <hr>
 
